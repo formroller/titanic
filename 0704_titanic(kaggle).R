@@ -1,20 +1,20 @@
-
+# refer : https://www.kaggle.com/redhorse93/r-titanic-data/code
 getwd()
 setwd('../titanic')
 ## 2.1 packages
-```{r message = FALsE, warning = FALSE}
+
 
 install.packages(c('readr','descr', 'VIM','ggplot2','RColorBrewer', 'scales', 'tidyversr','dplyr','purrr','tidyr','randomForest','caret','ROCR'))
 
 # data input, assesment
 library(readr)  # data input with readr :: read_csv()
-library(descr)  # descr::CrossTable() - ¹üÁÖº° ºóµµ¼ö, ºñÀ²À» ¼öÄ¡·Î È®ÀÎ
+library(descr)  # descr::CrossTable() - ë²”ì£¼ë³„ ë¹ˆë„ìˆ˜, ë¹„ìœ¨ì„ ìˆ˜ì¹˜ë¡œ í™•ì¸
 
 # visualization
 library(VIM)            # missing vlaues assesment used by VIM::aggr()
 library(ggplot2)        # Used in almost visualization
 library(RColorBrewer)   # plot color
-library(scales)         # plot setting - x/yÃà ¼³Á¤
+library(scales)         # plot setting - x/yì¶• ì„¤ì •
 
 # Feature engineering, Data Pre-Processing
 #library(tidyversr)
@@ -24,11 +24,11 @@ library(tidyr)   # tidyr::gater() //https://gomguard.tistory.com/229
 
 # Model generation
 library(randomForest)
-```
 
 
 
-# ÇÑ È­¸é¿¡ ¿©·¯°³ÀÇ plot Ãâ·Â
+
+# í•œ í™”ë©´ì— ì—¬ëŸ¬ê°œì˜ plot ì¶œë ¥
 multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL){
     library(grid)
     
@@ -57,42 +57,42 @@ multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL){
 
 
 
-##2.2 raw data impory : ¿øº»µ¥ÀÌÅÍ ºÒ·¯¿À±â
+##2.2 raw data impory : ì›ë³¸ë°ì´í„° ë¶ˆëŸ¬ì˜¤ê¸°
 train <- readr::read_csv('../titanic/train.csv')
 test <- readr::read_csv('../titanic/test.csv')
 
- # readr::read_csv() : read.csv()º¸´Ù ¸Ş¸ğ¸®¿¡ ´õ »¡¸® ¿Ã¸± ¼ö ÀÖ´Ù.
- #                   chr / factor ±¸ºĞ ¸øÇÏ°í chr¼Ó¼ºÀ¸·Î ÀúÀå 
+ # readr::read_csv() : read.csv()ë³´ë‹¤ ë©”ëª¨ë¦¬ì— ë” ë¹¨ë¦¬ ì˜¬ë¦´ ìˆ˜ ìˆë‹¤.
+ #                   chr / factor êµ¬ë¶„ ëª»í•˜ê³  chrì†ì„±ìœ¼ë¡œ ì €ì¥ 
 
 full<- dplyr::bind_rows(train,test)
 
- # dplyr::bind_rows : rbind()´Â Â÷¿ø(dimension)ÀÌ ¸ÂÁö¾Ê¾Æ º´ÇÕºÒ°¡ 
- #                  : testÀÇ Survived¸¦ NA·Î Ã³¸®ÇÏ¸ç ÇÏ³ª·Î º´ÇÕ
+ # dplyr::bind_rows : rbind()ëŠ” ì°¨ì›(dimension)ì´ ë§ì§€ì•Šì•„ ë³‘í•©ë¶ˆê°€ 
+ #                  : testì˜ Survivedë¥¼ NAë¡œ ì²˜ë¦¬í•˜ë©° í•˜ë‚˜ë¡œ ë³‘í•©
 
-##2.3 º¯¼ö ÀÇ¹Ì
-| º¯¼ö¸í        | ÇØ¼®(ÀÇ¹Ì)                       | Type      | 
+##2.3 ë³€ìˆ˜ ì˜ë¯¸
+| ë³€ìˆ˜ëª…        | í•´ì„(ì˜ë¯¸)                       | Type      | 
     |:-------------:|:---------------------------------|:----------|
-    |**PassengerID**|½Â°´À» ±¸º°ÇÏ´Â °íÀ¯ ID number    |Int        |
-    |**Survived**   |½Â°´ÀÇ »ıÁ¸ ¿©ºÎ¸¦ ³ªÅ¸³»¸ç »ıÁ¸Àº 1, »ç¸ÁÀº 0 ÀÔ´Ï´Ù.|Factor|
-    |**Pclass**     |¼±½ÇÀÇ µî±ŞÀ¸·Î¼­ 1µî±Ş(1)ºÎÅÍ 3µî±Ş(3)±îÁö 3°³ ¹üÁÖÀÔ´Ï´Ù.|Ord.Factor|
-    |**Name**       |½Â°´ÀÇ ÀÌ¸§                       |Factor|
-    |**Sex**        |½Â°´ÀÇ ¼ºº°                       |Factor|
-    |**Age**        |½Â°´ÀÇ ³ªÀÌ                       |Numeric|
-    |**SibSp**      |°¢ ½Â°´°ú µ¿¹İÇÏ´Â ÇüÁ¦ ¶Ç´Â ¹è¿ìÀÚÀÇ ¼ö¸¦ ¼³¸íÇÏ´Â º¯¼öÀÌ¸ç 0ºÎÅÍ 8±îÁö Á¸ÀçÇÕ´Ï´Ù.                            |Integer|
-    |**Parch**      |°¢ ½Â°´°ú µ¿¹İÇÏ´Â ºÎ¸ğ´Ô ¶Ç´Â ÀÚ³àÀÇ ¼ö¸¦ ¼³¸íÇÏ´Â º¯¼öÀÌ¸ç 0ºÎÅÍ 9±îÁö Á¸ÀçÇÕ´Ï´Ù.                            |Integer|
-    |**Ticket**     |½Â°´ÀÌ Å¾½ÂÇÑ Æ¼ÄÏ¿¡ ´ëÇÑ ¹®ÀÚ¿­ º¯¼ö|Factor|
-    |**Fare**       |½Â°´ÀÌ Áö±İ±îÁö ¿©ÇàÇÏ¸é¼­ ÁöºÒÇÑ ±İ¾×¿¡ ´ëÇÑ º¯¼ö|Numeric|
-    |**Cabin**      |°¢ ½Â°´ÀÇ ¼±½ÇÀ» ±¸ºĞÇÏ´Â º¯¼öÀÌ¸ç ¹üÁÖ¿Í °áÃøÄ¡°¡ ³Ê¹« ¸¹½À´Ï´Ù.                                          |Factor|
-    |**Embarked**   |½Â¼±Ç×, ÃâÇ×Áö¸¦ ³ªÅ¸³»¸ç C, Q, S 3°³ ¹üÁÖÀÌ´Ù.|Factor|
+    |**PassengerID**|ìŠ¹ê°ì„ êµ¬ë³„í•˜ëŠ” ê³ ìœ  ID number    |Int        |
+    |**Survived**   |ìŠ¹ê°ì˜ ìƒì¡´ ì—¬ë¶€ë¥¼ ë‚˜íƒ€ë‚´ë©° ìƒì¡´ì€ 1, ì‚¬ë§ì€ 0 ì…ë‹ˆë‹¤.|Factor|
+    |**Pclass**     |ì„ ì‹¤ì˜ ë“±ê¸‰ìœ¼ë¡œì„œ 1ë“±ê¸‰(1)ë¶€í„° 3ë“±ê¸‰(3)ê¹Œì§€ 3ê°œ ë²”ì£¼ì…ë‹ˆë‹¤.|Ord.Factor|
+    |**Name**       |ìŠ¹ê°ì˜ ì´ë¦„                       |Factor|
+    |**Sex**        |ìŠ¹ê°ì˜ ì„±ë³„                       |Factor|
+    |**Age**        |ìŠ¹ê°ì˜ ë‚˜ì´                       |Numeric|
+    |**SibSp**      |ê° ìŠ¹ê°ê³¼ ë™ë°˜í•˜ëŠ” í˜•ì œ ë˜ëŠ” ë°°ìš°ìì˜ ìˆ˜ë¥¼ ì„¤ëª…í•˜ëŠ” ë³€ìˆ˜ì´ë©° 0ë¶€í„° 8ê¹Œì§€ ì¡´ì¬í•©ë‹ˆë‹¤.                            |Integer|
+    |**Parch**      |ê° ìŠ¹ê°ê³¼ ë™ë°˜í•˜ëŠ” ë¶€ëª¨ë‹˜ ë˜ëŠ” ìë…€ì˜ ìˆ˜ë¥¼ ì„¤ëª…í•˜ëŠ” ë³€ìˆ˜ì´ë©° 0ë¶€í„° 9ê¹Œì§€ ì¡´ì¬í•©ë‹ˆë‹¤.                            |Integer|
+    |**Ticket**     |ìŠ¹ê°ì´ íƒ‘ìŠ¹í•œ í‹°ì¼“ì— ëŒ€í•œ ë¬¸ìì—´ ë³€ìˆ˜|Factor|
+    |**Fare**       |ìŠ¹ê°ì´ ì§€ê¸ˆê¹Œì§€ ì—¬í–‰í•˜ë©´ì„œ ì§€ë¶ˆí•œ ê¸ˆì•¡ì— ëŒ€í•œ ë³€ìˆ˜|Numeric|
+    |**Cabin**      |ê° ìŠ¹ê°ì˜ ì„ ì‹¤ì„ êµ¬ë¶„í•˜ëŠ” ë³€ìˆ˜ì´ë©° ë²”ì£¼ì™€ ê²°ì¸¡ì¹˜ê°€ ë„ˆë¬´ ë§ìŠµë‹ˆë‹¤.                                          |Factor|
+    |**Embarked**   |ìŠ¹ì„ í•­, ì¶œí•­ì§€ë¥¼ ë‚˜íƒ€ë‚´ë©° C, Q, S 3ê°œ ë²”ì£¼ì´ë‹¤.|Factor|
 
 
-##2.4 Change the variable type : º¯¼ö ¼Ó¼º º¯È¯
+##2.4 Change the variable type : ë³€ìˆ˜ ì†ì„± ë³€í™˜
 
-# EDA¿Í feature engineering¿¡ ¾Õ¼­ º¯¼ö ¼Ó¼º º¯È¯
-# dataµéÀ» inputÇÏ¸é¼­ `full`¿¡´Â `factor` ¼Ó¼ºÀÇ º¯¼öµéÀÌ ¾ø±âµµ ÇÏ°í 
-# `Pclass`ÀÇ 1, 2, 3Àº 1µî±Ş, 2µî±Ş, 3µî±ŞÀ» ³ªÅ¸³»´Â `factor`ÀÌ±â ¶§¹®ÀÔ´Ï´Ù.
+# EDAì™€ feature engineeringì— ì•ì„œ ë³€ìˆ˜ ì†ì„± ë³€í™˜
+# dataë“¤ì„ inputí•˜ë©´ì„œ `full`ì—ëŠ” `factor` ì†ì„±ì˜ ë³€ìˆ˜ë“¤ì´ ì—†ê¸°ë„ í•˜ê³  
+# `Pclass`ì˜ 1, 2, 3ì€ 1ë“±ê¸‰, 2ë“±ê¸‰, 3ë“±ê¸‰ì„ ë‚˜íƒ€ë‚´ëŠ” `factor`ì´ê¸° ë•Œë¬¸ì…ë‹ˆë‹¤.
 
-```{r}
+
     full <- full %>%
         dplyr::mutate(Survived = factor(Survived),
                       Pclass   = factor(Pclass, ordered = T),
@@ -101,19 +101,19 @@ full<- dplyr::bind_rows(train,test)
                       Ticket   = factor(Ticket),
                       Cabin    = factor(Cabin),
                       Embarked = factor(Embarked))
-```
+
 
 ##3. EDA
-# dat±¸¼º°ú °áÃøÄ¡ È¤Àº ÀÌ»óÄ¡ Á¸ÀçÇÏ´ÂÁö µîÀ» ¿ø½Ã µ¥ÀÌÅÍ¿¡¼­ Å½»öÇÏ°í ÀÌÇØÇÏ´Â °úÁ¤
+# datêµ¬ì„±ê³¼ ê²°ì¸¡ì¹˜ í˜¹ì€ ì´ìƒì¹˜ ì¡´ì¬í•˜ëŠ”ì§€ ë“±ì„ ì›ì‹œ ë°ì´í„°ì—ì„œ íƒìƒ‰í•˜ê³  ì´í•´í•˜ëŠ” ê³¼ì •
 
-##3.1 ¼öÄ¡°ªÀ» È°¿ëÇÑ data È®ÀÎ
-head(), summary()µî ÇÔ¼öµéÀÇ °á±£°ª(Output)À» ÅëÇØ data È®ÀÎ
+##3.1 ìˆ˜ì¹˜ê°’ì„ í™œìš©í•œ data í™•ì¸
+# head(), summary()ë“± í•¨ìˆ˜ë“¤ì˜ ê²°ê´ê°’(Output)ì„ í†µí•´ data í™•ì¸
 
 ##3.1.1 head()
-```{r}
+
 head(full, 10)
-```
- # Age - NA Á¸Àç
+
+ # Age - NA ì¡´ì¬
 
 ##3.1.2 str()
 str(full)
@@ -121,22 +121,22 @@ str(full)
 ##3.1.3 summary()
 summary(full)
 
-1. Survived : (target), 418(missing values)´Â test data
-2. Pclass   : 1,2,3µî±ŞÀ¸·Î ¹üÁÖÇüÀÌ¸ç, 3µî±ŞÀÌ °¡Àå ¸¹´Ù
-3. Name     : ÀÌ¸§ÀÌ ºñ½ÁÇÑ ½Â°´ Á¸Àç -> °¡Á·°ú °°ÀÌ Å¾½ÂÇÑ ½Â°´ ÀÖÀ»°ÍÀ¸·Î À¯Ãß
-4. Sex      : ³²¼ºÀÌ ¿©¼ºº¸´Ù 2¹è ¸¹´Ù.
-5. Age      : 0.17 - 80¼¼±îÁö Á¸Àç/ 0.17Àº ¿À±âÀÔ or ÀÌ»óÄ¡ÀÎÁö È®ÀÎ ÇÊ¿ä / 263°³ÀÇ °áÃøÄ¡
-6. Sibsp    : 0-8, 3ºĞÀ§¼ö : 1, ºÎºÎ ¶Ç´Â ÇüÁ¦¿Í ÇÔ²² Å¾½ÂÇßÀ½À» À¯Ãß °¡´É
-7. Parch    : 0-9, 3ºĞÀ§¼ö : 0, ºÎ¸ğ ¶Ç´Â ÀÚ³à¿Í ÇÔ²² Å¾½ÂÇÑ ½Â°´ °ÅÀÇ ¾ø´Ù.
-8. Ticket   : 3.1.2str() - ¿ÏÀü µ¿ÀÏ, ÀÏºÎ µ¿ÀÏ, ¿ÏÀü ´Ù¸§ => Ticket Size·Î ÆÄ»ıº¯¼ö »ı¼º
-9. Fare     : 0 - 512/ 1°³ÀÇ °áÃøÄ¡ / 3ºĞÀ§ : 31.275 / ÀÌ»ó°ª : 512
-10.Cabin    : °¡Àå ¸¹Àº °áÃøÄ¡(1014)/ ¹èÀÇ ±¸°£ Å»¶ô °í·Á
-11.Embarked : 3°³ÀÇ ¹üÁÖ·Î ±¸¼º / S°¡ °¡Àå ¸¹À½ / 2°³ÀÇ °áÃøÄ¡
+# 1. Survived : (target), 418(missing values)ëŠ” test data
+# 2. Pclass   : 1,2,3ë“±ê¸‰ìœ¼ë¡œ ë²”ì£¼í˜•ì´ë©°, 3ë“±ê¸‰ì´ ê°€ì¥ ë§ë‹¤
+# 3. Name     : ì´ë¦„ì´ ë¹„ìŠ·í•œ ìŠ¹ê° ì¡´ì¬ -> ê°€ì¡±ê³¼ ê°™ì´ íƒ‘ìŠ¹í•œ ìŠ¹ê° ìˆì„ê²ƒìœ¼ë¡œ ìœ ì¶”
+# 4. Sex      : ë‚¨ì„±ì´ ì—¬ì„±ë³´ë‹¤ 2ë°° ë§ë‹¤.
+# 5. Age      : 0.17 - 80ì„¸ê¹Œì§€ ì¡´ì¬/ 0.17ì€ ì˜¤ê¸°ì… or ì´ìƒì¹˜ì¸ì§€ í™•ì¸ í•„ìš” / 263ê°œì˜ ê²°ì¸¡ì¹˜
+# 6. Sibsp    : 0-8, 3ë¶„ìœ„ìˆ˜ : 1, ë¶€ë¶€ ë˜ëŠ” í˜•ì œì™€ í•¨ê»˜ íƒ‘ìŠ¹í–ˆìŒì„ ìœ ì¶” ê°€ëŠ¥
+# 7. Parch    : 0-9, 3ë¶„ìœ„ìˆ˜ : 0, ë¶€ëª¨ ë˜ëŠ” ìë…€ì™€ í•¨ê»˜ íƒ‘ìŠ¹í•œ ìŠ¹ê° ê±°ì˜ ì—†ë‹¤.
+# 8. Ticket   : 3.1.2str() - ì™„ì „ ë™ì¼, ì¼ë¶€ ë™ì¼, ì™„ì „ ë‹¤ë¦„ => Ticket Sizeë¡œ íŒŒìƒë³€ìˆ˜ ìƒì„±
+# 9. Fare     : 0 - 512/ 1ê°œì˜ ê²°ì¸¡ì¹˜ / 3ë¶„ìœ„ : 31.275 / ì´ìƒê°’ : 512
+# 10.Cabin    : ê°€ì¥ ë§ì€ ê²°ì¸¡ì¹˜(1014)/ ë°°ì˜ êµ¬ê°„ íƒˆë½ ê³ ë ¤
+# 11.Embarked : 3ê°œì˜ ë²”ì£¼ë¡œ êµ¬ì„± / Sê°€ ê°€ì¥ ë§ìŒ / 2ê°œì˜ ê²°ì¸¡ì¹˜
 
 ##3.2 Missing Values
 #1) vim
-#2) tidyverse - º¯¼öº° °áÃøÄ¡ ºñÀ² µµÃâ
-°áÃøÄ¡°¡ ÀÖ´Â º¯¼ö È®ÀÎÇÏ¸ç ¾ó¸¶³ª Á¸ÀçÇÏ´ÂÁö È®ÀÎ
+#2) tidyverse - ë³€ìˆ˜ë³„ ê²°ì¸¡ì¹˜ ë¹„ìœ¨ ë„ì¶œ
+ê²°ì¸¡ì¹˜ê°€ ìˆëŠ” ë³€ìˆ˜ í™•ì¸í•˜ë©° ì–¼ë§ˆë‚˜ ì¡´ì¬í•˜ëŠ”ì§€ í™•ì¸
 
 ##3.2.1 VIM Pacakages
 dev.new()
@@ -147,42 +147,42 @@ VIM::aggr(full, prop = FALSE, combined = T, numbers = T, sortVars = T, sortCombs
 full %>%
     dplyr::summarize_all(funs(sum(is.na(.))/n()))
 
-#1) featureÀÇ °áÃøÄ¡ ºñÀ² °è»ê ->  Data Frame ¼Ó¼º(1 * 12)
+#1) featureì˜ ê²°ì¸¡ì¹˜ ë¹„ìœ¨ ê³„ì‚° ->  Data Frame ì†ì„±(1 * 12)
 missing_values <- full %>% 
     dplyr::summarize_all(funs(sum(is.na(.))/n()))
 
-#2) À§ missing_values -> 12*2 data frame·Î  »ı¼º    
+#2) ìœ„ missing_values -> 12*2 data frameë¡œ  ìƒì„±    
 missing_values <-tidyr::gather(missing_values, key = 'feature', value = 'missing_pct')
 
-#3) missing_values ÀÌ¿ëÇÑ ½Ã°¢È­
+#3) missing_values ì´ìš©í•œ ì‹œê°í™”
 missing_values %>% 
-    #Aesthetic settinfg : Missing_pct ³»¸²Â÷¼øÀ¸·Î Á¤·Ä
+    #Aesthetic settinfg : Missing_pct ë‚´ë¦¼ì°¨ìˆœìœ¼ë¡œ ì •ë ¬
     ggplot(aes(x = reorder(feature, missing_pct), y = missing_pct)) +
     #Bar Plot
     geom_bar(stat = 'identity', fill = 'red') +
     #Title generation
     ggtitle('Rate of missing values in each features')+
     #Title detail setting
-    theme(plot.title = element_text(face = 'bold', # ±Û¾¾Ã¼
-                                    hjust = 0.5,   # Horizon(°¡·ÎºñÀ²)
+    theme(plot.title = element_text(face = 'bold', # ê¸€ì”¨ì²´
+                                    hjust = 0.5,   # Horizon(ê°€ë¡œë¹„ìœ¨)
                                     size = 15, color = 'darkblue')) +
     #x, y axis label setting 
     labs(x = 'Feature names', y = 'rate') +
-    #plotÀÇ x,yÃà º¯È¯
+    #plotì˜ x,yì¶• ë³€í™˜
     coord_flip()
- # => featureÀÇ °áÃøÄ¡ ºñÀ² È®ÀÎ °¡´É
- # => purrrÆĞÅ°Áö¸¦ ÅëÇÑ °áÃøÄ¡ ºñÀ² °è»ê ÈÄ, °áÃøÄ¡ Á¸ÀçÇÏ´Â º¯¼ö¸¸ ÃßÃâ ÈÄ ½Ã°¢È­
+ # => featureì˜ ê²°ì¸¡ì¹˜ ë¹„ìœ¨ í™•ì¸ ê°€ëŠ¥
+ # => purrríŒ¨í‚¤ì§€ë¥¼ í†µí•œ ê²°ì¸¡ì¹˜ ë¹„ìœ¨ ê³„ì‚° í›„, ê²°ì¸¡ì¹˜ ì¡´ì¬í•˜ëŠ” ë³€ìˆ˜ë§Œ ì¶”ì¶œ í›„ ì‹œê°í™”
 purrr::map_dbl(full, function(x){round((sum(is.na(x))/length(x)) * 100,1) })
 
-# 1) º¯¼öº° °áÃøÄ¡ ºñÀ² °è»ê
+# 1) ë³€ìˆ˜ë³„ ê²°ì¸¡ì¹˜ ë¹„ìœ¨ ê³„ì‚°
 miss_pct <- purrr::map_dbl(full, function(x){round((sum(is.na(x))/length(x)) * 100, 1) })
 
-# 2) °áÃøÄ¡ ºñÀ²ÀÌ 0%º¸´Ù Å« º¯¼ö¸¸ ¼±ÅÃ
+# 2) ê²°ì¸¡ì¹˜ ë¹„ìœ¨ì´ 0%ë³´ë‹¤ í° ë³€ìˆ˜ë§Œ ì„ íƒ
 miss_pct <- miss_pct[miss_pct >0]
 
-# 3)Data Frame »ı¼º
+# 3)Data Frame ìƒì„±
 data.frame(miss = miss_pct, var = names(miss_pct), row.names = NULL) %>%
-    # Aesthetic setting : miss ³»¸²Â÷¼øÀ¸·Î Á¤·Ä
+    # Aesthetic setting : miss ë‚´ë¦¼ì°¨ìˆœìœ¼ë¡œ ì •ë ¬
     ggplot(aes(x = reorder(var, miss), y = miss)) +
     # Bar Plot
     geom_bar(stat = 'identity', fill = 'red') +
@@ -194,30 +194,30 @@ data.frame(miss = miss_pct, var = names(miss_pct), row.names = NULL) %>%
                                     size = 15, color = 'darkblue'))+
     #x,y axis label setting
     labs(x = 'Feature names', y = 'Rate of missing values') +
-    #plotÀÇ x,yÃà º¯È¯
+    #plotì˜ x,yì¶• ë³€í™˜
     coord_flip()
 
- # => 12°³ÀÇ º¯¼öÁß 4°³ º¯¼ö¿¡¼­ °áÃøÄ¡ °üÂû('Survived'´Â 'test' data ÀÌ¹Ç·Î Á¦¿Ü) 'Cabin', 'Age', 'Embarked', 'Fare'
+ # => 12ê°œì˜ ë³€ìˆ˜ì¤‘ 4ê°œ ë³€ìˆ˜ì—ì„œ ê²°ì¸¡ì¹˜ ê´€ì°°('Survived'ëŠ” 'test' data ì´ë¯€ë¡œ ì œì™¸) 'Cabin', 'Age', 'Embarked', 'Fare'
 
-## ½Ã°¢È­ ÅëÇØ feature¸¦ ºĞ¼®, Å½»ö °úÁ¤
+## ì‹œê°í™” í†µí•´ featureë¥¼ ë¶„ì„, íƒìƒ‰ ê³¼ì •
 
 #3.3 Age
 
 dev.new()
 age.p1 <- full %>%
     ggplot(aes(Age)) + 
-    # È÷½ºÅä±×·¥ ±×¸®±â, ¼³Á¤
-    geom_histogram(breaks = seq(0, 80, by = 1),  # °£°İ ¼³Á¤
-                   col = 'red',                  # ¸·´ë °æ°è¼± »ö±ò
-                   fill = 'green',               # ¸·´ë ³»ºÎ »ö±ò
-                   alpha = .5) +                 # ¸·´ë Åõ¸íµµ = 50% 
+    # íˆìŠ¤í† ê·¸ë¨ ê·¸ë¦¬ê¸°, ì„¤ì •
+    geom_histogram(breaks = seq(0, 80, by = 1),  # ê°„ê²© ì„¤ì •
+                   col = 'red',                  # ë§‰ëŒ€ ê²½ê³„ì„  ìƒ‰ê¹”
+                   fill = 'green',               # ë§‰ëŒ€ ë‚´ë¶€ ìƒ‰ê¹”
+                   alpha = .5) +                 # ë§‰ëŒ€ íˆ¬ëª…ë„ = 50% 
     #Plor title
     ggtitle ('All Titanic passengers age histogram') +
     theme(plot.title = element_text(face = 'bold',
                                     hjust = 0.5,
                                     size = 15, color = 'darkblue'))
 age.p2 <- full %>%
-    # test data set ÀÇ Sruvived == NA ÀÎ °ª Á¦¿Ü 
+    # test data set ì˜ Sruvived == NA ì¸ ê°’ ì œì™¸ 
     filter(!is.na(Survived)) %>%
     ggplot(aes(Age, fill = Survived)) +
     geom_density(alpha = .5)+
@@ -225,29 +225,29 @@ age.p2 <- full %>%
     theme(plot.title = element_text(face = 'bold', hjust = 0.5,
                                     size = 15, color = 'darkblue'))
 
-# multiplot.layout Çü½Ä ÁöÁ¤
+# multiplot.layout í˜•ì‹ ì§€ì •
 multi.layout = matrix(c(1,1,2,2), 2,2, byrow = T)
 
-# À§¿¡¼­ »ı¼ºÇÑ 2°³ÀÇ ±×·¡ÇÁ ÇÑ È­¸é¿¡ Ãâ·Â
+# ìœ„ì—ì„œ ìƒì„±í•œ 2ê°œì˜ ê·¸ë˜í”„ í•œ í™”ë©´ì— ì¶œë ¥
 multiplot(age.p1, age.p2, layout = multi.layout)
 
 
 ##3.4 Pclass
-# Pclass¿¡ ÇØ´çÇÏ´Â Å¾½Â°´ÀÇ ºóµµ¼ö ½Ã°¢È­
-# - dplyr ÆĞÅ°Áö È°¿ë, Pclassº°·Î ±×·ìÈ­ ÇÑ µÚ ¹üÁÖº° ºóµµ¼ö ³ªÅ¸³»´Â Data Frame »ı¼º , ggplotÀ¸·Î ½Ã°¢È­
+# Pclassì— í•´ë‹¹í•˜ëŠ” íƒ‘ìŠ¹ê°ì˜ ë¹ˆë„ìˆ˜ ì‹œê°í™”
+# - dplyr íŒ¨í‚¤ì§€ í™œìš©, Pclassë³„ë¡œ ê·¸ë£¹í™” í•œ ë’¤ ë²”ì£¼ë³„ ë¹ˆë„ìˆ˜ ë‚˜íƒ€ë‚´ëŠ” Data Frame ìƒì„± , ggplotìœ¼ë¡œ ì‹œê°í™”
 
 full %>% 
-    #dplyr::group_by(), summarize() ÀÌ¿ëÇØ Pclass ºóµµ¼ö ±¸ÇÏ±â
+    #dplyr::group_by(), summarize() ì´ìš©í•´ Pclass ë¹ˆë„ìˆ˜ êµ¬í•˜ê¸°
     group_by(Pclass) %>%
     summarize(N = n()) %>%
     # Aesthetic setting
     ggplot(aes(Pclass, N))+
     geom_col() +
-    # Pclass ºóµµ¼ö plot¿¡ Ãâ·Â
-    geom_text(aes(label = N),      # PlotÀÇ y¿¡ ÇØ´çÇÏ´Â N(ºóµµ¼ö)¸¦ ¸ÅÇÎ
-              size = 5,            # ±Û¾¾ Å©±â
-              vjust = 1.2,         # vertical(°¡·Î) À§Ä¡ ¼³Á¤
-              color = '#ffffff') + # ±Û¾¾ »ö : Èò»ö
+    # Pclass ë¹ˆë„ìˆ˜ plotì— ì¶œë ¥
+    geom_text(aes(label = N),      # Plotì˜ yì— í•´ë‹¹í•˜ëŠ” N(ë¹ˆë„ìˆ˜)ë¥¼ ë§¤í•‘
+              size = 5,            # ê¸€ì”¨ í¬ê¸°
+              vjust = 1.2,         # vertical(ê°€ë¡œ) ìœ„ì¹˜ ì„¤ì •
+              color = '#ffffff') + # ê¸€ì”¨ ìƒ‰ : í°ìƒ‰
     # Plot title
     ggtitle('Number of each Pclass\'s passengers') + 
     # Title setting
@@ -255,11 +255,11 @@ full %>%
     #x, y axis name change
     labs(x ='Pclass', y = 'Count')
 
- # => 3µî±Ş °´½Ç¿¡ Å¾½ÂÇÑ ½Â°´ÀÌ °¡Àå ¸¹À½
- # °´½Ç µî±Şº° »ıÁ¸À²Àº ÃßÈÄ ´Ù·ë
+ # => 3ë“±ê¸‰ ê°ì‹¤ì— íƒ‘ìŠ¹í•œ ìŠ¹ê°ì´ ê°€ì¥ ë§ìŒ
+ # ê°ì‹¤ ë“±ê¸‰ë³„ ìƒì¡´ìœ¨ì€ ì¶”í›„ ë‹¤ë£¸
 
 ##3.5 Fare
-# Fare¿¡ ´ëÇÑ ½Ã°¢È­(È÷½ºÅä±×·¥, »óÀÚ±×¸²)
+# Fareì— ëŒ€í•œ ì‹œê°í™”(íˆìŠ¤í† ê·¸ë¨, ìƒìê·¸ë¦¼)
 
 #histogram
 Fare.p1 <- full %>%
@@ -274,17 +274,228 @@ Fare.p1 <- full %>%
 Fare.p2 <- full %>%
     filter(!is.na(Survived)) %>%
     ggplot(aes(Survived, Fare)) +
-    # °üÃøÄ¡¸¦ È¸»öÁ¡À¸·Î, Áßº¹µÇ´Â ºÎºĞÀº ÆÛÁö°Ô Ãâ·Â
+    # ê´€ì¸¡ì¹˜ë¥¼ íšŒìƒ‰ì ìœ¼ë¡œ, ì¤‘ë³µë˜ëŠ” ë¶€ë¶„ì€ í¼ì§€ê²Œ ì¶œë ¥
     geom_jitter(col = 'grey') +
-    # »óÀÚ±×¸² Åõº´µµ : 50%
+    # ìƒìê·¸ë¦¼ íˆ¬ë³‘ë„ : 50%
     geom_boxplot(alpha = .5) +
     ggtitle('Boxplot of passengers Fare')+
     theme(plot.title = element_text(face = 'bold', hjust = 0.5, size = 15))
 
-#multiplot layout Çü½Ä ÁöÁ¤
+#multiplot layout í˜•ì‹ ì§€ì •
 multi.layout = matrix(c(1,1,2,2),2,2)
-# À§¿¡¼­ »ı¼ºÇÑ ±×·¡ÇÁ ÇÑ È­¸é¿¡ Ãâ·Â
+# ìœ„ì—ì„œ ìƒì„±í•œ ê·¸ë˜í”„ í•œ í™”ë©´ì— ì¶œë ¥
 dev.new()
 multiplot(Fare.p1, Fare.p2, layout = multi.layout)
 
-# => »ıÁ¸ÀÚµéÀÌ »ç¸ÁÇÑ ½Â°´µéº¸´Ù Fare ³ôÁö¸¸ Å« Â÷ÀÌ´Â ¾øÀ½
+# => ìƒì¡´ìë“¤ì´ ì‚¬ë§í•œ ìŠ¹ê°ë“¤ë³´ë‹¤ Fare ë†’ì§€ë§Œ í° ì°¨ì´ëŠ” ì—†ìŒ
+
+## 3.6 Sex
+# ë‚¨/ì—¬ ê°„ ìƒì¡´ìœ¨ ì°¨ì´ í™•ì¸
+
+sex.p1 <- full %>%
+    dplyr::group_by(Sex) %>%
+    summarize(N = n()) %>%
+    ggplot(aes(Sex,N)) +
+    geom_col()+
+    geom_text(aes(label = N), size = 5, vjust = 1.2, color = '#FFFFFF') + 
+    ggtitle('Bar Plot of Sex') + 
+    labs(x = 'Sex', y = 'Count')
+
+sex.p2 <- full[1:891,] %>%
+    ggplot(aes(Sex, fill = Survived)) +
+    geom_bar(postion = 'fill') + 
+    scale_fill_brewer(palette = 'Set1')
+    scale_y_continuous(labels = percent) + 
+    ggtitle('Survival Rate by Sex') + 
+    labs(x = 'Sex', y = 'Rate')
+
+
+multi.layout = matrix(rep(c(1,2), times = 2), 2, 2, byrow = T)
+
+dev.new()
+multiplot(sex.p1, sex.p2, layout = multi.layout)
+
+mosaicplot(Survived ~ Sex, 
+           data = full[1:891, ], col = TRUE,
+           main = 'Survival rate by pessengers gender')
+
+#=> íƒ‘ìŠ¹ê°ì€ ë‚¨ì„±ì´ ë†’ìœ¼ë‚˜ ìƒì¡´ìœ¨ì€ ì—¬ì„± íƒ‘ìŠ¹ê°ì´ ë†’ìŒ.
+
+## Featrue Engineering & Data Pre-procseeing
+#3-EDA ë°”íƒ•ìœ¼ë¡œ ê²°ì¸¡ì¹˜ ëŒ€ì¹˜ ë° íŒŒìƒë³€ìˆ˜ ìƒì„±
+
+# 4.1 Age -> Age.Group
+
+full <- full %>%
+    # ê²°ì¸¡ì¹˜ ì œì™¸í•œ ê°’ë“¤ì˜ í‰ê· ìœ¼ë¡œ ì±„ì›€.
+    mutate(Age = ifelse(is.na(Age), mean(full$Age, na.rm = TRUE), Age),
+           # Ageê°’ì— ë”°ë¼ ë²”ì£¼í˜• íŒŒìƒë³€ìˆ˜ Age.Group ìƒì„±
+           Age.Group = case_when(Age < 13           ~ 'Age.0012',
+                                 Age >=13 & Age <18 ~ 'Age.1317',
+                                 Age >=18 & Age <60 ~ 'Age.1859',
+                                 Age >=60           ~ 'Age.60inf'),
+           # Chr ì†ì„±ì„ Factorë¡œ ë³€í™˜
+           Age.Group = factor(Age.Group))
+
+#  4.2 SibSp & Parch -> FamilySized
+
+full <- full %>%
+    #SibSp, Parchì™€ 1(ë³¸ì¸)ì„ ë”í•´ FamilySizeë¼ëŠ” íŒŒìƒë³€ìˆ˜ ë¨¼ì € ìƒì„±
+    mutate(FamilySize = .$SibSp + .$Parch +1,
+           # FamilySize ê°’ì— ë”°ë¼ ë²”ì£¼í˜• íŒŒìƒ ë³€ìˆ˜ FamilySize ìƒì„±
+           FamilySized= dplyr::case_when(FamilySize == 1 ~ 'Single',
+                                         FamilySize >= 2 & FamilySize < 5 ~ 'Small',
+                                         FamilySize >= 5 ~ 'Big'),
+           # Chr ì†ì„±ì¸ FamilySizeë¥¼ Factorë¡œ ë³€í™˜
+           # ì§‘ë‹¨ ê·œëª¨ í¬ê¸°ì— ë”°ë¼ levelsë¥¼ ìƒˆë¡œ ì§€ì •
+           FamilySize = factor(FamilySized, levels = c('Single','Small','Big')))
+
+# => 'SibSp', 'Parch'ë¥¼ ì´ìš©í•´ FamilySizeìƒì„±
+ # => ë‘ê°œì˜ ë³€ìˆ˜ë¥¼ í•˜ë‚˜ë¡œ ì¤„ì¼ ê²½ìš° ëª¨ë¸ì´ ë”ìš± ë‹¨ìˆœí•´ì§€ëŠ” ì¥ì ì´ ìˆë‹¤.(ex - BMIì§€ìˆ˜(í‚¤,ì²´ì¤‘))
+
+# 4.4 Name & Sex -> title
+#3.6-Sex) ì—¬ì„±ì˜ ìƒì¡´ìœ¨ì´ ë‚¨ì„±ë³´ë‹¤ ë†’ë‹¤.
+# ë”°ë¼ì„œ 'Name'ì—ì„œ 'ì„±ë³„ê³¼ ê´€ë ¨ëœ ì´ë¦„ë§Œì„ ì¶”ì¶œí•´ ë²”ì£¼í™” ì‹œí‚¬ê²½ìš° ìœ ì˜ë¯¸ í•  ê²ƒì´ë‹¤'ë¼ëŠ” ê°€ì •
+# ë¨¼ì € 'full' dataì—ì„œ 'Name'ì´ë¼ëŠ” ì—´ë²¡í„°ë§Œ ì¶”ì¶œí•´ 'title'ë¡œ ì§€ì •
+
+# 1) Nameë§Œ ì¶”ì¶œí•´ title ë²¡í„°ì— ì €ì¥
+title <- full$Name
+# 2) ì •ê·œì‹, gsub() ì´ìš©í•´ ì„±ë³„ê³¼ ê´€ë ¨ì„± ë†’ì€ ì´ë¦„ë§Œ ì¶”ì¶œí•´ title ë²¡í„°ë¡œ ì €ì¥
+title <- gsub('^.*, (.*?)\\..*$','\\1',title)
+#3) ìœ„ title ë²¡í„°ë¥¼ fullì— ë‹¤ì‹œ ì €ì¥í•˜ë˜ title íŒŒìƒë³€ìˆ˜ë¡œ ì €ì¥
+full$title <- title
+# 4) ê³ ìœ ê°’ í™•ì¸
+unique(full$title)
+# => 18ê°œì˜ ë²”ì£¼ê°€ ìˆìŒ
+# ì´ë¥¼ ê·¸ëŒ€ë¡œ ì‚¬ìš©í•  ê²½ìš° ëª¨ë¸ì˜(íŠ¹íˆ Tree Based Model)ë³µì¡ë„ ìƒë‹¹íˆ ë†’ì•„ì§(ë³€ìˆ˜ë¥¼ ì¤„ì—¬ì•¼í•œë‹¤).
+# 'descr' íŒ¨í‚¤ì§€ë¥¼ ì´ìš©í•´ ê° ë²”ì£¼ë³„ ë¹ˆë„ìˆ˜ì™€ ë¹„ìœ¨ í™•ì¸
+
+descr::CrossTable(full$title)
+=> 18 -> 5ê°œë¡œ ë²”ì£¼ ì¶•ì†Œ
+
+# 5) 5ê°œ ë²”ì£¼ë¡œ ë‹¨ìˆœí™” 
+full <- full %>%
+    # in ëŒ€ì‹  == ì‚¬ìš©ì‹œ Recyling Rule(ì¬ì‚¬ìš©ê·œì¹™)ìœ¼ë¡œ ì¸í•´ ì›í•˜ëŠ” ê°’ì´ ë‚˜ì˜¤ì§€ ì•ŠëŠ”ë‹¤.
+    mutate(title = ifelse(title %in% c('Mlle','Ms','Mr','Lady','Dona'), 'Miss',title),
+           title = ifelse(title == 'Mme','Mrs', title),
+           title = ifelse(title %in% c('Capt','Col','major','Dr','Rev','Don',
+                                       'Sir','the Countess','Jonkheer'), 'Officer',title),
+           title = factor(title))
+# 6) íŒŒìƒë³€ìˆ˜ ìƒì„± í›„ ë²”ì£¼ë³„ ë¹ˆë„ìˆ˜, ë¹„ìœ¨ í™•ì¸
+descr::CrossTable(full$title)
+
+# 4.5 Ticket -> Ticket.size
+# trian/test í¬ê´„í•´ ìŠ¹ê°ì€ 1309ëª…, ì¼ë¶€ ì¤‘ë³µëœ í‹°ì¼ˆ ë²ˆí˜¸ ì¡´ì¬
+
+length(unique(full$Ticket)) # ê³ ìœ í•œ ë²”ì£¼ì˜ ê°¯ìˆ˜ íŒŒì•…í•˜ê¸° ìœ„í•´ lengthì‚¬ìš©
+head(summary(full$Ticket), 10) 
+
+# (í™•ì¸)
+# ê²°ì¸¡ì¹˜ ì—†ëŠ” ë³€ìˆ˜ì´ë‚˜ ê³ ìœ í•œ í‹°ì¼“ì´ 929ê°œ?
+# CA. 2343ìœ¼ë¡œ ì™„ì „íˆ ê°™ì€ ì¸ì› 11ëª…?
+
+full %>%
+    # í‹°ì¼“ì´ ì¼ì¹˜í•˜ëŠ” 11ëª…ì˜ ìŠ¹ê°ë“¤ë§Œ í•„í„°ë§
+    filter(Ticket == 'CA. 2343') %>%
+    # ëª¨ë“  ë³€ìˆ˜ í™•ì¸í•œ í•„ìš” ì—†ìœ¼ë¯€ë¡œ ì•„ë˜ ë³€ìˆ˜ë§Œ í™•ì¸
+    select(Pclass, Name, Age, FamilySized)
+
+#=> ìœ„ ë™ì¼í•œ í‹°ì¼“ë²ˆí˜¸ 11ëª…ì€ ê°€ì¡±, í˜•ì œ ê´€ê³„
+# ê·¸ëŸ¬ë‚˜, ì¼ë¶€ë§Œ ì¼ì¹˜í•˜ëŠ” ìŠ¹ê°ë„ ì¡´ì¬.
+# ì´ëŸ° í‹°ì¼“ì˜ ê³ ìœ í•œ ë„˜ë²„(ê¸€ììˆ˜) ê°¯ìˆ˜ë¥¼ ë‚˜íƒ€ë‚´ëŠ” 'ticket.unique' íŒŒìƒ ë³€ìˆ˜ ë§Œë“¤ê³ 
+# 'ticket.unique'ë¥¼ ë°”íƒ•ìœ¼ë¡œ 3ê°œ ë²”ì£¼ë¥¼ ê°–ëŠ” 'ticket.size'íŒŒìƒë³€ìˆ˜ë¥¼ ë§Œë“¤ì–´ ë³´ì
+
+#1) ìš°ì„  ticket.uniqueê°€ ëª¨ë‘ 0ì´ë¼ê³  ì €ì¥í•¨.
+ticket.unique <- rep(0, nrow(full))
+#2) Ticket Featureì—ì„œ ê³ ìœ í•œ ê²ƒë“¤ë§Œ ì¶”ì¶œí•´ ticket ë²¡í„°ì— ì €ì¥
+tickets <- unique(full$Ticket)
+# 3) ë°˜ë³µë¬¸ ì¤‘ì²©í•´ í‹°ì¼“ì´ ê°™ì€ ìŠ¹ê°ë“¤ë§Œ ì¶”ì¶œ í›„, ê° í‹°ì¼“ë“¤ì˜ ê¸¸ì´(ë¬¸ì ê°¯ìˆ˜)ë¥¼ ì¶”ì¶œí•´ ì €ì¥í•œë‹¤.
+for (i in 1:length(tickets)){
+    current.ticket <- tickets[i]
+    party.indexes <- which(full$Ticket == current.ticket)
+    #for loop ì¤‘ì²©
+    for (k in 1:length(party.indexes)){
+        ticket.unique[party.indexes[k]] <- length(party.indexes)
+    }
+}
+
+# 4) ìœ„ì—ì„œ ê³„ì‚°í•œ ticket.uniqueì„ íŒŒìƒë³€ìˆ˜ë¡œ ì €ì¥
+full$ticket <- ticket.unique
+
+# 5) ticket.uniqueì— ë”°ë¼ ì„¸ê°€ì§€ ë²”ì£¼ë¡œ ë‚˜ëˆ  ticekt.size ë³€ìˆ˜ ìƒì„±
+full <- full %>%
+    mutate(ticket.size = case_when(ticket.unique == 1 ~ 'Single',
+                                   ticket.unique < 5 & ticket.unique >= 2 ~ 'Small',
+                                   ticket.unique >= 5 ~ 'Big'),
+           ticket.size = factor(ticket.size,
+                                levels = c('Single','Small','Big')))
+
+# 4.6 Embarked
+# ê²°ì¸¡ì¹˜ê°€ 2ê°œ ìˆëŠ” featureë¡œ, 'Embarked' ë²”ì£¼ì¤‘ ìµœë¹ˆê°’ì¸ 'S'ë¡œ ì¹˜í™˜
+full$Embarked <- replace_na(full$Embarked,'S')
+
+# 4.7 Fare 
+# ê²°ì¸¡ì¹˜ 1ê°œ, ìœ„ì—ì„œ ë³¸ íˆìŠ¤í† ê·¸ë¨ì„ ë°”íƒ•ìœ¼ë¡œ ê²°ì¸¡ì¹˜ 0ìœ¼ë¡œ ì¹˜í™˜
+full$Fare <- replace_na(full$Fare,0)
+
+```ë°ì´í„° ì „ì²˜ë¦¬ ì™„ë£Œ!
+    ì´í›„ ê³¼ì •ì€ ì§€ê¸ˆê¹Œì§€ ë§Œë“  íŒŒìƒ ë³€ìˆ˜ë“¤ì„ íƒìƒ‰í•˜ë©° ëª¨ë¸ ìƒì„±ì— ì‚¬ìš©í•  ë³€ìˆ˜ë“¤ì„ ì„ íƒí•˜ëŠ” ê³¼ì •(=Feature Selection)```
+
+## 5. Relationship to tsrget feature 'Survived' & Feature Selection
+# ë³¸ê²©ì ì¸ ì‹œê°í™”ì— ì•„ì„œ, ë³€ìˆ˜ë“¤ì´ ìƒì¡´ìœ¨ê³¼ ì–¼ë§ˆë‚˜ ì—°ê´€ì„±ì´ ë†’ì€ì§€ ë³´ëŠ”ê²ƒì´ ëª©ì .
+# ë”°ë¼ì„œ ìƒì¡´ ì—¬ë¶€ë¥¼ ì•Œ ìˆ˜ ìˆëŠ” train data setë§Œ ì‚¬ìš©í•œë‹¤.
+
+#5.0 Data Set Split
+# - ì•„ë˜ ì½”ë“œë¥¼ ì´ìš©í•´ ì „ì²˜ë¦¬ê°€ ëë‚œ 'full' dataë¥¼ 'train'/'test'ë¡œ ë¶„í• 
+
+# Feature Selection ì „ì´ë¯€ë¡œ ëª¨ë“  ë³€ìˆ˜ ì„ íƒí•œë‹¤
+train <- full[1:891,]
+test <- full[892:1309,]
+
+# 5.1)Pclass
+dev.new()
+train %>%
+    ggplot(aes(Pclass, fill = Survived)) +
+    geom_bar(position = 'fill') +
+    #plot í…Œë§ˆ ì„¤ì • : ì¡°ê¸ˆ ë” ì„ ëª…í•œ ìƒ‰ê¹”ë¡œ ë³€í™˜
+    scale_fill_brewer(palette = 'Set1') +
+    # Y axis setting
+    scale_y_continuous(labels = percent) + 
+    # x, y ì¶• ì´ë¦„ê³¼ plotì˜ main title, sub title ì„¤ì •
+    labs(x = 'Pclass', y = 'Rate',
+         title = 'Bar Plot', subtitle = 'How many people survived in each Pclass?')
+
+# 5.2) Sex
+# 3.6 - Sexì™€ ë™ì¼
+mosaicplot(Survived ~ Sex,
+           data = train, col = TRUE,
+           main = 'Survived rate by passengers gender')
+
+# 5.3) Embarked
+train %>% 
+    ggplot(aes(Embarked, fill = Survived)) +
+    geom_bar(position = 'fill') +
+    scale_fill_brewer(palette = 'Set1') +
+    scale_y_continuous(labels = percent) + 
+    labs(x = 'Embarked', y = 'Rate',
+         title = 'Bar plot', subtitle = 'How many people survived in each Embarked')
+
+# 5.4) Family Size
+train %>%
+    ggplot(aes(FamilySized, fill = Survived)) +
+    geom_bar(position = 'fill') +
+    scale_fill_brewer(palette = 'Set1') +
+    scale_y_continuous(labels = percent) +
+    labs(x = 'FamilySized', y = 'Rate',
+         title = 'Bar plot', subtitle = 'Survival rate by FamilySized')
+#=> ë™ìŠ¹í•œ ì¸ì›ìˆ˜ì— ë”°ë¼ ìƒì¡´ìœ¨ì— ì°¨ì´ê°€ ìˆê³  'FamilySized'ì™€ 'Survived'ëŠ” ë¹„ì„ í˜• ê´€ê³„ì„ì„ ì•Œ ìˆ˜ ìˆë‹¤.
+
+# 5.5) Age.Group
+dev.new()
+train %>% 
+    ggplot(aes(Age.Group, fill = Survived)) +
+    geom_bar(postion = 'fill') +
+    scale_fill_brewer(palette = 'Set1') +
+    scale_y_continuous(labels = percent) +
+    labs(x= 'Age group', y = 'Rate',
+         title = 'Bar Plot', subtitle = 'Survival rate by Age group')
