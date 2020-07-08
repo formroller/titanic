@@ -136,7 +136,7 @@ summary(full)
 ##3.2 Missing Values
 #1) vim
 #2) tidyverse - 변수별 결측치 비율 도출
-결측치가 있는 변수 확인하며 얼마나 존재하는지 확인
+# - 결측치가 있는 변수 확인하며 얼마나 존재하는지 확인
 
 ##3.2.1 VIM Pacakages
 dev.new()
@@ -159,7 +159,7 @@ missing_values %>%
     #Aesthetic settinfg : Missing_pct 내림차순으로 정렬
     ggplot(aes(x = reorder(feature, missing_pct), y = missing_pct)) +
     #Bar Plot
-    geom_bar(stat = 'identity', fill = 'red') +
+    geom_bar(stat = 'identity', fill = 'red') +  ## geom_bar 막대그래프, https://rfriend.tistory.com/69 변수 갯수 및 데이터 형태에 따른 그래프
     #Title generation
     ggtitle('Rate of missing values in each features')+
     #Title detail setting
@@ -304,7 +304,7 @@ sex.p1 <- full %>%
 sex.p2 <- full[1:891,] %>%
     ggplot(aes(Sex, fill = Survived)) +
     geom_bar(postion = 'fill') + 
-    scale_fill_brewer(palette = 'Set1')
+    scale_fill_brewer(palette = 'Set1')+
     scale_y_continuous(labels = percent) + 
     ggtitle('Survival Rate by Sex') + 
     labs(x = 'Sex', y = 'Rate')
@@ -438,8 +438,8 @@ full$Embarked <- replace_na(full$Embarked,'S')
 # 결측치 1개, 위에서 본 히스토그램을 바탕으로 결측치 0으로 치환
 full$Fare <- replace_na(full$Fare,0)
 
-```데이터 전처리 완료!
-    이후 과정은 지금까지 만든 파생 변수들을 탐색하며 모델 생성에 사용할 변수들을 선택하는 과정(=Feature Selection)```
+# ```데이터 전처리 완료!
+#     이후 과정은 지금까지 만든 파생 변수들을 탐색하며 모델 생성에 사용할 변수들을 선택하는 과정(=Feature Selection)```
 
 ## 5. Relationship to tsrget feature 'Survived' & Feature Selection
 # 본격적인 시각화에 아서, 변수들이 생존율과 얼마나 연관성이 높은지 보는것이 목적.
@@ -499,3 +499,81 @@ train %>%
     scale_y_continuous(labels = percent) +
     labs(x= 'Age group', y = 'Rate',
          title = 'Bar Plot', subtitle = 'Survival rate by Age group')
+
+# 5.6)title 
+train %>% 
+    ggplot(aes(title, fill = Survived)) +
+    geom_bar(position = 'fill') +
+    scale_fill_brewer(palette = 'Set1') +
+    scale_y_continuous(labels = percent) +
+    labs(x = title, y = 'Rate',
+         title = 'Bar plot', subtitle = 'Survival rate by passengers title')
+
+# 5.7) ticket.size
+
+train %>%
+    ggplot(aes(ticket.size, fill = Survived)) +
+    geom_bar(position =  'fill')+
+    scale_fill_brewer(palette = 'Set1') +
+    scale_y_continuous(labels = percent) +
+    labs( x = 'ticket.size', y = 'Rate',
+          title = 'Bar plot', subtitle = 'Survival rate by ticket.size')
+
+# 5.8) Description of actual used features
+# 생성한 파생변수 모두 유용, 실제 사용할 변수만 선택해 저장
+ # (변수 설명)
+
+    # | 변수명        | Type   | 설명                     | 
+    # |:-------------:|:-------|:----------------------------------------------------------|
+    # |**Survived**   | factor | Target feature, 생존 == 1, 사망 == 0 |
+    # |**Sex**        | factor | 성별, `male` or `female` |
+    # |**Pclass**     | factor | 선실 등급, 1등급(1), 2등급(2), 3등급(3) |
+    # |**Embarked**   | factor | 승선항, 사우샘프턴(S), 셸부르(C), 퀸즈타운(Q) |
+    # |**FamilySized**| factor | 가족의 규모, `SibSp`와 `Parch`를 이용해서 만든 파생변수, 범주는 3개     |
+    # |**Age.Group**  | factor | 연령대, `Age`를 이용해서 만든 파생변수, 범주는 4개 |
+    # |**title**      | factor | 이름의 일부분, `Name`을 이용해서 만든 파생변수, 범주는 5개 |
+    # |**ticket.size**| factor | 티켓의 고유한 부분의 길이, `ticket`을 이용해서 만든 파생변수, 범주는 3개 |
+    
+
+# 1) Id Number 제외하고 실제 사용할 7개 입력변수와 1개의 타켓변수를 선택, 저장
+train <- train%>%
+    select('Pclass','Sex','Embarked', 'FamilySized',
+           'Age.Group','title','ticket.size', 'Survived')
+# 2) Submit 위해 Id벡터 추출해 ID에 저장
+ID <- test$
+# 3) Id와 Survived 제외한 나머지 6개 변수들 선택, 저장
+test <- test %>%
+    select('Pclass','Sex','Embarked', 'FamilySized',
+           'Age.Group','title','ticket.size')
+
+# 6. Machine learning model generation
+# ['train' data set 이용해 기계학습 모델 생성]
+#  원래는 'train', 'validation', 'test' data set 먼저 만들고 다양한 모델들 생성한 후 
+# 교차검증(CV)을 거쳐 최종 모델을 선택하는 것이 맞지만 생략해 'RandomForset' 생성한 후 'test' data를 예측해보고
+# 'competition'에 submit할 데이터 생성
+
+# 6.1) Random Forest model generation
+ # - 재현성 위해 seed number생성
+titanic.rf <- randomForest(Survived ~., data = train, importance = T, ntree = 2000)
+
+# 6.2) Feature importance check
+importance(titanic.rf)
+varImpPlot(titanic.rf)
+## MDG : Mean Decrease Gini
+ - 각 나무가 가지를 뻗어나갈 때마다 선택되는 변수들의 불순도 감소량을 측정해 전체 나무로부터 그 평균치 값을 사용한다.
+ - MDG 값이 크다 -> 동일 범주끼리 묶이도록 하는데 일조(그 변수를 가지고 개체들을 분류하게 되면 불순도를 감소시킨다.)
+
+## MDA : Mean Decrease Accuracy 
+ - 구축된 나무의 정확도가 특정 변수 제거 후 재구축시 감소되는 정확도의 차이를 변수별로 평균화한 값
+ - 분류 정확도를 높이는데 큰 영향을 준 변수일수록 그 변수를 제러했을 때 정확도의 감소량은 커진다.
+
+=> 랜덤포레스트의 변수 중요도를 측정하는 두 지표는 값이 커질수록 변수의 중요도가 높아진다.
+# 6.3) Predict test data and create submit data
+# Predict
+pred.rf <- predict(object = titanic.rf, newdata = test, type = 'Class')
+
+# data Frame generation
+submit <- data.frame(passengerID = ID, Survived = pred.rf)
+
+# Write the submit data frame to file : setwd()로 지정한 폴더에 csv파일로 생성
+write.csv(submit, file = './titanic_submit.csv', row.names = F)
